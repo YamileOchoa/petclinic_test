@@ -1,37 +1,94 @@
 package com.tecsup.petclinic.services;
 
-import lombok.extern.slf4j.Slf4j;
+import com.tecsup.petclinic.entities.Specialty;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest
-@Slf4j
-public class SpecialtyServiceTest {
+class SpecialtyServiceTest {
 
-	//@Autowired
-   //	private OwnerService ownerService;
+    @Autowired
+    private SpecialtyService specialtyService;
 
-	/**
-	 * 
-	 */
-	/*
-	@Test
-	public void testFindOwnerById() {
+    @AfterEach
+    void cleanup() {
+        try {
+            specialtyService.findAll().forEach(s -> {
+                try {
+                    specialtyService.delete(s.getId());
+                } catch (Exception ignore) {}
+            });
+        } catch (Exception ignore) {}
+    }
 
-		long ID = 1;
-		String NAME = "Jaime";
-		Owner owner = null;
-		
-		try {
-			
-			owner = ownerService.findById(ID);
-			
-		} catch (OwnertNotFoundException e) {
-			fail(e.getMessage());
-		}
-		log.info("" + owner);
+    @Test
+    void createSpecialty_shouldPersistAndReturnWithId() {
+        Specialty s = new Specialty();
+        s.setName("Cardiología");
+        s.setOffice("Oficina A");
+        s.setHOpen(8);
+        s.setHClose(16);
 
-		assertEquals(NAME, owner.getName());
+        Specialty saved = specialtyService.create(s);
 
-	}
-	*/
+        assertThat(saved).isNotNull();
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getName()).isEqualTo("Cardiología");
+        assertThat(saved.getOffice()).isEqualTo("Oficina A");
+    }
+
+    @Test
+    void findById_shouldReturnExistingSpecialty() {
+        Specialty s = new Specialty();
+        s.setName("Dermatología");
+        Specialty saved = specialtyService.create(s);
+
+        Specialty found = specialtyService.findById(saved.getId());
+
+        assertThat(found).isNotNull();
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.getName()).isEqualTo("Dermatología");
+    }
+
+    @Test
+    void updateSpecialty_shouldModifyFields() {
+        Specialty s = new Specialty();
+        s.setName("Antiguo");
+        s.setOffice("X");
+        Specialty saved = specialtyService.create(s);
+
+        Specialty toUpdate = new Specialty();
+        toUpdate.setName("Actualizado");
+        toUpdate.setOffice("Oficina B");
+        toUpdate.setHOpen(9);
+        toUpdate.setHClose(17);
+
+        Specialty updated = specialtyService.update(saved.getId(), toUpdate);
+
+        assertThat(updated).isNotNull();
+        assertThat(updated.getName()).isEqualTo("Actualizado");
+        assertThat(updated.getOffice()).isEqualTo("Oficina B");
+        assertThat(updated.getHOpen()).isEqualTo(9);
+        assertThat(updated.getHClose()).isEqualTo(17);
+    }
+
+    @Test
+    void deleteSpecialty_shouldRemoveEntity() {
+        Specialty s = new Specialty();
+        s.setName("Temporal");
+        Specialty saved = specialtyService.create(s);
+
+        specialtyService.delete(saved.getId());
+
+        Specialty deleted = null;
+        try {
+            deleted = specialtyService.findById(saved.getId());
+        } catch (Exception ignore) { }
+
+        assertThat(deleted).isNull();
+    }
 }
